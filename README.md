@@ -7,33 +7,29 @@ Cloudflare Workers + D1でのデプロイを前提としたモノレポ構成。
 
 ```
 form-app-template/
-├── apps/
-│   ├── admin/              # 管理画面 (React SPA)
-│   │   ├── src/
-│   │   │   ├── routes/     # Tanstack Router
-│   │   │   ├── lib/        # API client, auth
-│   │   │   └── main.tsx
-│   │   ├── vite.config.ts
-│   │   └── package.json
-│   │
-│   └── api/                # API (Cloudflare Workers)
-│       ├── src/
-│       │   ├── handlers/   # エンドポイントハンドラ
-│       │   ├── middleware/ # 認証・CORS
-│       │   ├── services/   # ビジネスロジック
-│       │   ├── repositories/ # データアクセス
-│       │   └── index.ts
-│       ├── schema.sql      # D1スキーマ
-│       ├── wrangler.toml
-│       └── package.json
-│
-├── shared/                 # 共通型定義
+├── admin/                  # 管理画面 (React SPA)
 │   ├── src/
-│   │   └── types/
+│   │   ├── routes/         # Tanstack Router
+│   │   ├── lib/            # API client, auth
+│   │   ├── types/          # 型定義
+│   │   └── main.tsx
 │   └── package.json
 │
+├── api/                    # API (Cloudflare Workers)
+│   ├── src/
+│   │   ├── handlers/       # エンドポイントハンドラ
+│   │   ├── middleware/     # 認証・CORS
+│   │   ├── services/       # ビジネスロジック
+│   │   ├── repositories/   # データアクセス
+│   │   └── types/          # 型定義
+│   ├── schema.sql          # D1スキーマ
+│   ├── wrangler.toml
+│   └── package.json
+│
+├── front/                  # フロント (フォーム送信用)
+│   └── src/
+│
 ├── docs/                   # ドキュメント
-│   └── 20251015_0000_フォーム管理システム要件定義.md
 │
 ├── pnpm-workspace.yaml
 └── package.json
@@ -41,7 +37,7 @@ form-app-template/
 
 ## 🛠️ 技術スタック
 
-### 管理画面 (apps/admin)
+### 管理画面 (admin)
 
 - **フレームワーク**: React + TypeScript
 - **ルーティング**: Tanstack Router
@@ -49,7 +45,7 @@ form-app-template/
 - **ビルドツール**: Vite
 - **デプロイ**: Cloudflare Pages (Workers)
 
-### API (apps/api)
+### API (api)
 
 - **ランタイム**: Cloudflare Workers
 - **フレームワーク**: Hono
@@ -76,7 +72,7 @@ pnpm install
 #### ローカル開発用
 
 ```bash
-cd apps/api
+cd api
 
 # ローカルD1にスキーマを適用
 pnpm wrangler d1 execute form-app-db --local --file=./schema.sql
@@ -85,7 +81,7 @@ pnpm wrangler d1 execute form-app-db --local --file=./schema.sql
 #### 本番環境用
 
 ```bash
-cd apps/api
+cd api
 
 # D1データベースを作成（初回のみ）
 pnpm wrangler d1 create form-app-db
@@ -100,7 +96,7 @@ pnpm wrangler d1 execute form-app-db --remote --file=./schema.sql
 
 ### 3. 環境変数の設定
 
-`apps/api/wrangler.toml` の `[vars]` セクションを編集：
+`api/wrangler.toml` の `[vars]` セクションを編集：
 
 ```toml
 [vars]
@@ -112,7 +108,7 @@ ALLOWED_ORIGINS = "*"  # 本番環境では具体的なオリジンを指定
 **本番環境では `wrangler secret` コマンドを使用:**
 
 ```bash
-cd apps/api
+cd api
 pnpm wrangler secret put ADMIN_PASSWORD
 ```
 
@@ -212,14 +208,14 @@ Authorization: Basic base64(username:password)
 ### APIのデプロイ
 
 ```bash
-cd apps/api
+cd api
 pnpm run deploy
 ```
 
 ### 管理画面のデプロイ
 
 ```bash
-cd apps/admin
+cd admin
 pnpm run deploy
 ```
 
@@ -249,7 +245,7 @@ CREATE INDEX idx_created_at ON form_submissions(created_at);
 
 ```bash
 # 本番環境でのシークレット設定
-cd apps/api
+cd api
 pnpm wrangler secret put ADMIN_PASSWORD
 ```
 
@@ -259,18 +255,19 @@ pnpm wrangler secret put ADMIN_PASSWORD
 
 - ✅ ログイン画面 (`/login`)
 - ✅ Basic認証によるセキュリティ
+- ✅ フォーム送信一覧表示 (`/`)
+  - ✅ ページネーション (1ページ20件)
+  - ✅ フィルター機能（フォームID）
+  - ✅ テーブル表示
 
 ### 実装予定
 
-- ⬜ フォーム送信一覧表示 (`/`)
-  - ページネーション
-  - フィルター機能（日付範囲、フォームID）
-  - 検索機能
 - ⬜ 詳細表示 (`/submissions/:id`)
   - 全フィールド表示
   - メタデータ表示
   - 削除機能
 - ⬜ CSV出力機能
+- ⬜ 検索機能の拡張（日付範囲など）
 
 ## 🧪 テスト
 
@@ -304,7 +301,7 @@ curl http://localhost:8787/api/admin/submissions \
 
 ```bash
 # ローカル開発環境でスキーマを適用
-cd apps/api
+cd api
 pnpm wrangler d1 execute form-app-db --local --file=./schema.sql
 ```
 
