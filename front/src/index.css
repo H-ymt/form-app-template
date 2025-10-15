@@ -1,0 +1,14 @@
+@import '@shared/styles/app.css';
+
+body {
+  @apply bg-background text-body-light font-base;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply text-body font-medium;
+}

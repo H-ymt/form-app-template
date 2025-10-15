@@ -8,6 +8,7 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 ### 技術スタック
 
 #### 管理画面 (admin)
+
 - **フレームワーク**: React + TypeScript
 - **ルーティング**: Tanstack Router (ファイルベースルーティング)
 - **スタイリング**: Tailwind CSS v4
@@ -15,6 +16,7 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 - **デプロイ**: Cloudflare Pages (Workers)
 
 #### API (api)
+
 - **ランタイム**: Cloudflare Workers
 - **フレームワーク**: Hono (軽量Webフレームワーク)
 - **データベース**: Cloudflare D1 (SQLite)
@@ -22,7 +24,8 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 - **認証**: Basic認証
 
 #### フロント (front)
-- **用途**: フォーム送信用のフロントエンド（実装予定）
+
+- **用途**: フォーム送信用のフロントエンド
 - **ビルドツール**: Vite
 
 ## 設計作業ルール
@@ -40,6 +43,7 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 ### 共通ルール
 
 - TypeScriptで型安全性を保つ（`any` の乱用を避ける）
+- Tailwind CSSで、`/shared/styles/app.css`にて定義されたカスタムテーマ変数を利用して一貫したスタイリングを行う
 - 小さく単一責務のコンポーネント/関数を作成
 - ESLint + Prettierによるコード品質維持
 - import は一貫したパス戦略を採用（`@/` エイリアスを使用）
@@ -114,96 +118,6 @@ D1 Database
 - **Handler**: HTTPリクエスト/レスポンス処理、バリデーション
 - **Service**: ビジネスロジック、UUID生成、タイムスタンプ生成
 - **Repository**: SQLクエリ実行、データマッピング
-
-### 管理画面の認証フロー
-
-1. ユーザーが `/login` でユーザー名・パスワードを入力
-2. `auth.ts` の `setAuth()` でBase64エンコードしてlocalStorageに保存
-3. `api.ts` の `getAuthHeader()` でリクエストヘッダーに `Authorization: Basic ...` を付与
-4. APIミドルウェアで認証チェック
-5. 認証失敗時は401レスポンス → `/login` にリダイレクト
-
-## APIエンドポイント
-
-### Public API
-
-#### フォーム送信
-
-```http
-POST /api/forms/submit
-Content-Type: application/json
-
-{
-  "formId": "contact-form",
-  "name": "山田太郎",
-  "email": "yamada@example.com",
-  "message": "お問い合わせ内容",
-  // 任意のフィールドを追加可能
-}
-```
-
-**レスポンス:**
-```json
-{
-  "success": true,
-  "submissionId": "8e1ae4d1-ac0f-4b71-b4ef-784ff245d0f5"
-}
-```
-
-### Admin API (Basic認証必須)
-
-#### 送信一覧取得
-
-```http
-GET /api/admin/submissions?page=1&limit=20&formId=contact-form
-Authorization: Basic base64(username:password)
-```
-
-**クエリパラメータ:**
-- `page`: ページ番号 (default: 1)
-- `limit`: 1ページあたりの件数 (default: 20)
-- `formId`: フォームIDでフィルター (optional)
-- `startDate`: 開始日 ISO8601 (optional)
-- `endDate`: 終了日 ISO8601 (optional)
-
-**レスポンス:**
-```json
-{
-  "data": [
-    {
-      "id": "8e1ae4d1-ac0f-4b71-b4ef-784ff245d0f5",
-      "formId": "test-form",
-      "data": { "name": "テストユーザー", "email": "test@example.com" },
-      "metadata": {
-        "ipAddress": "127.0.0.1",
-        "userAgent": "curl/8.4.0",
-        "referrer": null
-      },
-      "createdAt": "2025-10-15T12:00:00.000Z"
-    }
-  ],
-  "pagination": {
-    "currentPage": 1,
-    "totalPages": 1,
-    "totalItems": 1,
-    "limit": 20
-  }
-}
-```
-
-#### 詳細取得
-
-```http
-GET /api/admin/submissions/:id
-Authorization: Basic base64(username:password)
-```
-
-#### 削除
-
-```http
-DELETE /api/admin/submissions/:id
-Authorization: Basic base64(username:password)
-```
 
 ## 開発コマンド
 
@@ -298,63 +212,6 @@ ADMIN_PASSWORD = "password"  # 本番環境では wrangler secret を使用
 ALLOWED_ORIGINS = "*"        # 本番環境では具体的なオリジンを指定
 ```
 
-## 実装状況
-
-### ✅ 実装済み
-
-- [x] プロジェクト基盤 (pnpm workspaces)
-- [x] API
-  - [x] フォーム送信エンドポイント (`POST /api/forms/submit`)
-  - [x] 管理API (一覧、詳細、削除)
-  - [x] Basic認証ミドルウェア
-  - [x] CORSミドルウェア
-  - [x] D1データベース連携
-- [x] 管理画面
-  - [x] ログイン画面
-  - [x] 認証管理 (localStorage)
-  - [x] APIクライアント
-  - [x] 送信一覧画面
-  - [x] フィルター機能（フォームID）
-  - [x] ページネーション
-
-### ⬜ 実装予定
-
-- [ ] 管理画面
-  - [ ] 詳細画面
-  - [ ] CSV出力機能
-  - [ ] 検索機能の拡張
-- [ ] フロント (front)
-  - [ ] フォーム送信画面
-- [ ] 拡張機能
-  - [ ] Resend連携（メール通知）
-  - [ ] Webhook機能
-  - [ ] ファイルアップロード (R2)
-
-## トラブルシューティング
-
-### D1テーブルが見つからないエラー
-
-ローカル開発環境でスキーマが適用されていない可能性があります。
-
-```bash
-cd api
-pnpm wrangler d1 execute form-app-db --local --file=./schema.sql
-```
-
-### 認証エラー (401 Unauthorized)
-
-`wrangler.toml` の `ADMIN_USERNAME` と `ADMIN_PASSWORD` を確認してください。
-
-```toml
-[vars]
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password"
-```
-
-### CORS エラー
-
-`wrangler.toml` の `ALLOWED_ORIGINS` を確認してください。開発環境では `*` で問題ありませんが、本番環境では具体的なオリジンを指定してください。
-
 ## 参考リソース
 
 - [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
@@ -366,6 +223,7 @@ ADMIN_PASSWORD = "password"
 # GitHub 操作ルール
 
 - ユーザーから PR を出して、と言われたときは、現在の作業のフィーチャーブランチを切りコミットを行ってから PR を出すようにする
+- ユーザーから commit して、と言われたときは、必ず`git status`や`git diff`を行い、変更内容を確認してから conventional commit 形式でコミットメッセージを作成し、コミットを行うようにする
 - develop や main への直接 push は禁止です
 - D1データベースのマイグレーションを含む差分は自動デプロイで環境を壊しうるので、ユーザーに許可を取ってから実行してください
 - ロジックにまつわる変更をしたあとの Push の前には、プロジェクトルートで `pnpm typecheck` と `pnpm lint` を行ってから Push するようにしてください

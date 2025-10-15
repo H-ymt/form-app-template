@@ -1,4 +1,4 @@
-import './style.css';
+import './index.css';
 
 console.log('Form app loaded');
 
