@@ -1,10 +1,10 @@
-import { getAuthHeader } from './auth';
 import type {
   FormSubmission,
   ListSubmissionsResponse,
   ListSubmissionsQuery,
   DeleteSubmissionResponse,
-} from '@form-app/shared';
+} from '@/types/form';
+import { getAuthHeader } from './auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
 

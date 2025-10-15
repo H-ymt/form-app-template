@@ -1,4 +1,4 @@
-import type { FormSubmission, ListSubmissionsQuery } from '@form-app/shared';
+import type { FormSubmission, ListSubmissionsQuery } from '../types/form';
 
 interface DBSubmission {
   id: string;

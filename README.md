@@ -42,6 +42,7 @@ form-app-template/
 ## 🛠️ 技術スタック
 
 ### 管理画面 (apps/admin)
+
 - **フレームワーク**: React + TypeScript
 - **ルーティング**: Tanstack Router
 - **スタイリング**: Tailwind CSS v4
@@ -49,6 +50,7 @@ form-app-template/
 - **デプロイ**: Cloudflare Pages (Workers)
 
 ### API (apps/api)
+
 - **ランタイム**: Cloudflare Workers
 - **フレームワーク**: Hono
 - **データベース**: Cloudflare D1 (SQLite)
@@ -56,6 +58,7 @@ form-app-template/
 - **認証**: Basic認証
 
 ### 共通
+
 - **パッケージマネージャ**: pnpm workspaces
 - **言語**: TypeScript
 - **リンター**: ESLint + Prettier
@@ -167,6 +170,7 @@ Content-Type: application/json
 ```
 
 **レスポンス:**
+
 ```json
 {
   "success": true,
@@ -182,6 +186,7 @@ Authorization: Basic base64(username:password)
 ```
 
 **クエリパラメータ:**
+
 - `page`: ページ番号 (default: 1)
 - `limit`: 1ページあたりの件数 (default: 20)
 - `formId`: フォームIDでフィルター (optional)
@@ -251,10 +256,12 @@ pnpm wrangler secret put ADMIN_PASSWORD
 ## 📊 管理画面機能
 
 ### 実装済み
+
 - ✅ ログイン画面 (`/login`)
 - ✅ Basic認証によるセキュリティ
 
 ### 実装予定
+
 - ⬜ フォーム送信一覧表示 (`/`)
   - ページネーション
   - フィルター機能（日付範囲、フォームID）
@@ -285,6 +292,7 @@ curl http://localhost:8787/api/admin/submissions \
 詳細は [CLAUDE.md](./CLAUDE.md) を参照してください。
 
 ### 主要な規約
+
 - TypeScriptで型安全性を保つ（`any` の乱用を避ける）
 - 小さく単一責務のコンポーネント/関数を作成
 - ESLint + Prettierによるコード品質維持

@@ -4,8 +4,9 @@
   "description": "汎用フォーム管理システム",
   "private": true,
   "scripts": {
-    "dev:admin": "pnpm --filter @form-app/admin dev",
-    "dev:api": "pnpm --filter @form-app/api dev",
+    "dev:front": "pnpm --filter front dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
@@ -32,8 +33,8 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "node": ">=22",
+    "pnpm": ">=8"
   },
   "packageManager": "pnpm@8.15.0"
 }

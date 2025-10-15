@@ -1,13 +1,13 @@
 import { Hono } from 'hono';
-import type { Env } from './types/env';
-import { corsMiddleware } from './middleware/cors';
-import { authMiddleware } from './middleware/auth';
-import { submitFormHandler } from './handlers/form.handler';
 import {
   listSubmissionsHandler,
   getSubmissionHandler,
   deleteSubmissionHandler,
 } from './handlers/admin.handler';
+import { submitFormHandler } from './handlers/form.handler';
+import { authMiddleware } from './middleware/auth';
+import { corsMiddleware } from './middleware/cors';
+import type { Env } from './types/env';
 
 const app = new Hono<{ Bindings: Env }>();
 

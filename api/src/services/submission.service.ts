@@ -1,10 +1,10 @@
+import { SubmissionRepository } from '../repositories/submission.repository';
 import type {
   FormSubmission,
   SubmitFormRequest,
   ListSubmissionsQuery,
   Pagination,
-} from '@form-app/shared';
-import { SubmissionRepository } from '../repositories/submission.repository';
+} from '../types/form';
 
 export class SubmissionService {
   constructor(private repository: SubmissionRepository) {}
