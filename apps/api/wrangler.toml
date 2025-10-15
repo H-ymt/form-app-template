@@ -1,0 +1,22 @@
+name = "form-app-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# D1 データベース
+[[d1_databases]]
+binding = "DB"
+database_name = "form-app-db"
+database_id = "f0082c62-7788-4070-8f2d-5fda733c0c16"
+
+# 環境変数（本番環境では wrangler secret で設定）
+[vars]
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "password"
+ALLOWED_ORIGINS = "*"
+
+# 本番環境では以下をコメント解除して実際のIDを設定
+# [env.production]
+# [[env.production.d1_databases]]
+# binding = "DB"
+# database_name = "form-app-db"
+# database_id = "your-production-database-id"

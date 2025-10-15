@@ -1,0 +1,39 @@
+{
+  "name": "form-app-template",
+  "version": "1.0.0",
+  "description": "汎用フォーム管理システム",
+  "private": true,
+  "scripts": {
+    "dev:admin": "pnpm --filter @form-app/admin dev",
+    "dev:api": "pnpm --filter @form-app/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "keywords": [
+    "form",
+    "cloudflare-workers",
+    "react",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
