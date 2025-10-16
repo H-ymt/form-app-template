@@ -1,4 +1,4 @@
-@import '@shared/styles/app.css';
+@import '@form-app/ui/styles/app.css';
 
 body {
   @apply bg-background text-body-light font-base;
