@@ -23,9 +23,9 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 - **バリデーション**: Zod
 - **認証**: Basic認証
 
-#### フロント (front)
+#### 公開Web (web)
 
-- **用途**: フォーム送信用のフロントエンド
+- **用途**: フォーム送信用の公開Webサイト
 - **ビルドツール**: Vite
 
 ## 設計作業ルール
@@ -69,29 +69,32 @@ Cloudflare Workers + D1を使用し、pnpm workspacesでモノレポ管理され
 
 ```
 form-app-template/
-├── admin/                         # 管理画面 (React SPA)
-│   ├── src/
-│   │   ├── routes/                # Tanstack Router ルート定義
-│   │   ├── lib/                   # ユーティリティ (auth, api)
-│   │   ├── types/                 # 型定義
-│   │   ├── components/            # Reactコンポーネント
-│   │   └── hooks/                 # カスタムフック
-│   └── package.json
+├── apps/
+│   ├── admin/                     # 管理画面 (React SPA)
+│   │   ├── src/
+│   │   │   ├── routes/            # Tanstack Router ルート定義
+│   │   │   ├── lib/               # ユーティリティ (auth, api)
+│   │   │   ├── types/             # 型定義
+│   │   │   ├── components/        # Reactコンポーネント
+│   │   │   └── hooks/             # カスタムフック
+│   │   └── package.json
+│   │
+│   ├── api/                       # API (Cloudflare Workers)
+│   │   ├── src/
+│   │   │   ├── handlers/          # エンドポイントハンドラ
+│   │   │   ├── middleware/        # ミドルウェア
+│   │   │   ├── services/          # ビジネスロジック層
+│   │   │   ├── repositories/      # データアクセス層
+│   │   │   └── types/             # 型定義
+│   │   ├── schema.sql             # D1データベーススキーマ
+│   │   ├── wrangler.toml          # Cloudflare Workers設定
+│   │   └── package.json
+│   │
+│   └── web/                       # 公開Web (フォーム送信用)
+│       ├── src/
+│       └── package.json
 │
-├── api/                           # API (Cloudflare Workers)
-│   ├── src/
-│   │   ├── handlers/              # エンドポイントハンドラ
-│   │   ├── middleware/            # ミドルウェア
-│   │   ├── services/              # ビジネスロジック層
-│   │   ├── repositories/          # データアクセス層
-│   │   └── types/                 # 型定義
-│   ├── schema.sql                 # D1データベーススキーマ
-│   ├── wrangler.toml              # Cloudflare Workers設定
-│   └── package.json
-│
-├── front/                         # フロント (フォーム送信用)
-│   ├── src/
-│   └── package.json
+├── packages/                      # 共有パッケージ
 │
 ├── docs/                          # ドキュメント
 │
@@ -133,6 +136,9 @@ pnpm dev:api
 # 管理画面開発サーバー起動
 pnpm dev:admin
 
+# 公開Web開発サーバー起動
+pnpm dev:web
+
 # すべてのパッケージをビルド
 pnpm build
 
@@ -143,10 +149,10 @@ pnpm typecheck
 pnpm lint
 ```
 
-### API (api)
+### API (apps/api)
 
 ```bash
-cd api
+cd apps/api
 
 # 開発サーバー起動
 pnpm dev
@@ -167,10 +173,10 @@ pnpm wrangler d1 execute form-app-db --remote --file=./schema.sql
 pnpm wrangler secret put ADMIN_PASSWORD
 ```
 
-### 管理画面 (admin)
+### 管理画面 (apps/admin)
 
 ```bash
-cd admin
+cd apps/admin
 
 # 開発サーバー起動
 pnpm dev

@@ -4,7 +4,7 @@
   "description": "フォーム管理システム",
   "private": true,
   "scripts": {
-    "dev:front": "pnpm --filter front dev",
+    "dev:web": "pnpm --filter web dev",
     "dev:admin": "pnpm --filter admin dev",
     "dev:api": "pnpm --filter api dev",
     "build": "pnpm -r build",
