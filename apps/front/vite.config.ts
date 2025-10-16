@@ -8,8 +8,8 @@ export default defineConfig({
     alias: {
       // application source
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // shared styles directory
-      '@shared': fileURLToPath(new URL('../shared', import.meta.url)),
+      // shared UI package
+      '@form-app/ui': fileURLToPath(new URL('../../packages/ui', import.meta.url)),
     },
   },
   build: {
