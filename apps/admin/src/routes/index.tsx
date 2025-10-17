@@ -4,22 +4,97 @@ import { listSubmissions } from '@/lib/api';
 import { clearAuth } from '@/lib/auth';
 import type { FormSubmission, ListSubmissionsResponse } from '@/types/form';
 
+// URLクエリパラメータの型定義
+type SearchParams = {
+  page?: number;
+  formId?: string;
+  startDate?: string;
+  endDate?: string;
+  keyword?: string;
+};
+
+// フィルター状態の型定義
+interface FilterState {
+  formId: string;
+  startDate: string;
+  endDate: string;
+  keyword: string;
+}
+
 export const Route = createFileRoute('/')({
+  validateSearch: (search: Record<string, unknown>): SearchParams => {
+    return {
+      page: search?.page ? Number(search.page) : undefined,
+      formId: (search?.formId as string) || undefined,
+      startDate: (search?.startDate as string) || undefined,
+      endDate: (search?.endDate as string) || undefined,
+      keyword: (search?.keyword as string) || undefined,
+    };
+  },
   component: Index,
 });
 
 function Index() {
   const navigate = useNavigate();
+  const searchParams = Route.useSearch();
   const [data, setData] = useState<ListSubmissionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [formIdFilter, setFormIdFilter] = useState('');
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // フィルター状態（URLパラメータから初期化）
+  const [filters, setFilters] = useState<FilterState>({
+    formId: searchParams.formId || '',
+    startDate: searchParams.startDate || '',
+    endDate: searchParams.endDate || '',
+    keyword: searchParams.keyword || '',
+  });
+
+  // 現在のページ（URLパラメータから初期化）
+  const currentPage = searchParams.page || 1;
 
   useEffect(() => {
     loadSubmissions();
-  }, [currentPage, formIdFilter]);
+  }, [searchParams]);
 
+  // バリデーション関数
+  function validateFilters(filters: FilterState): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    // 日付の妥当性チェック
+    if (filters.startDate && filters.endDate) {
+      const start = new Date(filters.startDate + 'T00:00:00');
+      const end = new Date(filters.endDate + 'T00:00:00');
+
+      if (start > end) {
+        errors.push('開始日は終了日より前の日付を指定してください');
+      }
+    }
+
+    // 未来の日付チェック
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+    if (filters.startDate) {
+      const startDate = new Date(filters.startDate + 'T00:00:00');
+      if (startDate > today) {
+        errors.push('開始日に未来の日付は指定できません');
+      }
+    }
+
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate + 'T00:00:00');
+      if (endDate > today) {
+        errors.push('終了日に未来の日付は指定できません');
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  // データ取得関数
   async function loadSubmissions() {
     try {
       setLoading(true);
@@ -27,7 +102,10 @@ function Index() {
       const response = await listSubmissions({
         page: currentPage,
         limit: 20,
-        ...(formIdFilter && { formId: formIdFilter }),
+        ...(searchParams.formId && { formId: searchParams.formId }),
+        ...(searchParams.startDate && { startDate: searchParams.startDate }),
+        ...(searchParams.endDate && { endDate: searchParams.endDate }),
+        ...(searchParams.keyword && { search: searchParams.keyword }),
       });
       setData(response);
     } catch (err) {
@@ -37,9 +115,61 @@ function Index() {
     }
   }
 
+  // 検索実行
+  function handleSearch() {
+    // バリデーション
+    const validation = validateFilters(filters);
+    setValidationErrors(validation.errors);
+
+    if (!validation.isValid) {
+      return;
+    }
+
+    // URLパラメータを更新（ページは1にリセット）
+    navigate({
+      to: '/',
+      search: {
+        page: 1,
+        ...(filters.formId && { formId: filters.formId }),
+        ...(filters.startDate && { startDate: filters.startDate }),
+        ...(filters.endDate && { endDate: filters.endDate }),
+        ...(filters.keyword && { keyword: filters.keyword }),
+      },
+    });
+  }
+
+  // フィルタークリア
+  function handleClear() {
+    const clearedFilters: FilterState = {
+      formId: '',
+      startDate: '',
+      endDate: '',
+      keyword: '',
+    };
+    setFilters(clearedFilters);
+    setValidationErrors([]);
+
+    // URLパラメータもクリア
+    navigate({
+      to: '/',
+      search: {},
+    });
+  }
+
   function handleLogout() {
     clearAuth();
     navigate({ to: '/login' });
+  }
+
+  // ページ遷移
+  function handlePageChange(newPage: number) {
+    navigate({
+      to: '/',
+      search: {
+        ...searchParams,
+        page: newPage,
+      },
+    });
   }
 
   function handleRowClick(id: string) {
@@ -81,33 +211,98 @@ function Index() {
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* フィルター */}
-        <div className="mb-6 rounded-lg bg-white p-4 shadow">
-          <div className="flex items-center gap-4">
-            <label htmlFor="formId" className="text-sm font-medium text-gray-700">
-              フォームID:
-            </label>
-            <input
-              id="formId"
-              type="text"
-              value={formIdFilter}
-              onChange={(e) => {
-                setFormIdFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="フィルター（空欄で全件表示）"
-              className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {formIdFilter && (
+        <div className="mb-6 rounded-lg bg-white p-6 shadow">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">フィルター</h2>
+
+          <div className="space-y-4">
+            {/* フォームID */}
+            <div>
+              <label htmlFor="formId" className="block text-sm font-medium text-gray-700">
+                フォームID
+              </label>
+              <input
+                id="formId"
+                type="text"
+                value={filters.formId}
+                onChange={(e) => setFilters({ ...filters, formId: e.target.value })}
+                placeholder="例: contact-form"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* 日付範囲 */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
+                  開始日
+                </label>
+                <input
+                  id="startDate"
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  value={filters.startDate}
+                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">
+                  終了日
+                </label>
+                <input
+                  id="endDate"
+                  type="date"
+                  max={new Date().toISOString().split('T')[0]}
+                  value={filters.endDate}
+                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* キーワード検索 */}
+            <div>
+              <label htmlFor="keyword" className="block text-sm font-medium text-gray-700">
+                キーワード検索
+              </label>
+              <input
+                id="keyword"
+                type="text"
+                value={filters.keyword}
+                onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
+                placeholder="フォームIDまたはフォームデータ内を検索"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">※フォームIDまたはフォームデータ内を検索</p>
+            </div>
+
+            {/* バリデーションエラー */}
+            {validationErrors.length > 0 && (
+              <div className="rounded-md bg-red-50 p-3" role="alert" aria-live="polite">
+                <ul className="list-disc space-y-1 pl-5 text-sm text-red-800">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* ボタン */}
+            <div className="flex gap-3">
               <button
-                onClick={() => {
-                  setFormIdFilter('');
-                  setCurrentPage(1);
-                }}
-                className="rounded-md bg-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                onClick={handleSearch}
+                className="rounded-md bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                検索
+              </button>
+              <button
+                onClick={handleClear}
+                className="rounded-md border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 クリア
               </button>
-            )}
+            </div>
           </div>
         </div>
 
@@ -190,7 +385,7 @@ function Index() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -200,7 +395,9 @@ function Index() {
                     {currentPage} / {data.pagination.totalPages}
                   </span>
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(data.pagination.totalPages, p + 1))}
+                    onClick={() =>
+                      handlePageChange(Math.min(data.pagination.totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === data.pagination.totalPages}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
