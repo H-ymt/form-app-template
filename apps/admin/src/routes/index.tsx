@@ -24,7 +24,7 @@ interface FilterState {
 export const Route = createFileRoute('/')({
   validateSearch: (search: Record<string, unknown>): SearchParams => {
     return {
-      page: Number(search?.page) || undefined,
+      page: search?.page ? Number(search.page) : undefined,
       formId: (search?.formId as string) || undefined,
       startDate: (search?.startDate as string) || undefined,
       endDate: (search?.endDate as string) || undefined,
@@ -63,8 +63,8 @@ function Index() {
 
     // 日付の妥当性チェック
     if (filters.startDate && filters.endDate) {
-      const start = new Date(filters.startDate);
-      const end = new Date(filters.endDate);
+      const start = new Date(filters.startDate + 'T00:00:00');
+      const end = new Date(filters.endDate + 'T00:00:00');
 
       if (start > end) {
         errors.push('開始日は終了日より前の日付を指定してください');
@@ -72,20 +72,17 @@ function Index() {
     }
 
     // 未来の日付チェック
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // 時刻をリセット
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
 
     if (filters.startDate) {
-      const startDate = new Date(filters.startDate);
-      startDate.setHours(0, 0, 0, 0);
+      const startDate = new Date(filters.startDate + 'T00:00:00');
       if (startDate > today) {
         errors.push('開始日に未来の日付は指定できません');
       }
     }
 
     if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      endDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(filters.endDate + 'T00:00:00');
       if (endDate > today) {
         errors.push('終了日に未来の日付は指定できません');
       }
@@ -242,6 +239,7 @@ function Index() {
                 <input
                   id="startDate"
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -255,6 +253,7 @@ function Index() {
                 <input
                   id="endDate"
                   type="date"
+                  max={new Date().toISOString().split('T')[0]}
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -280,7 +279,7 @@ function Index() {
 
             {/* バリデーションエラー */}
             {validationErrors.length > 0 && (
-              <div className="rounded-md bg-red-50 p-3">
+              <div className="rounded-md bg-red-50 p-3" role="alert" aria-live="polite">
                 <ul className="list-disc space-y-1 pl-5 text-sm text-red-800">
                   {validationErrors.map((error, index) => (
                     <li key={index}>{error}</li>
